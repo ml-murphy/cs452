@@ -1,0 +1,2 @@
+rep: is the entry point for any operations, is the actual underlying queue function
+deq: is the abstraction 

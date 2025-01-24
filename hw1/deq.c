@@ -23,10 +23,69 @@ static Rep rep(Deq q) {         // cast and check
   return (Rep)q;
 }
 
-static void put(Rep r, End e, Data d) {}
-static Data ith(Rep r, End e, int i)  { return 0; }
-static Data get(Rep r, End e)         { return 0; }
-static Data rem(Rep r, End e, Data d) { return 0; }
+static void put(Rep r, End e, Data d) {
+  // initialize new node
+  Node n=(Node)malloc(sizeof(*n));
+  if (!n) ERROR("malloc() failed");
+
+  //set data and neighbors of new node
+  n->data=d;
+  n->np[e]=0;
+  if (!r->ht[Head]) { // if empty, head=tail=new_node
+    r->ht[Head]=n;
+    r->ht[Tail]=n;
+  } else {
+    /* "Operations on opposite ends are symmetrical." 
+        We use the `End` enum's integer representation 
+        to determine how `n`'s next/prev pointers 
+        (and obviously, `r`'s head/tail pointers) 
+        should be updated. 
+    */
+    n->np[!e]=r->ht[e]; // "new_node.np[(e == Head ? Tail : Head)] = r->ht[e]"
+    r->ht[e]->np[e]=n; 
+    r->ht[e]=n;
+  }
+  
+  //increment length of deque
+  r->len++;
+}
+static Data ith(Rep r, End e, int i)  {
+  Node n = r->ht[e];
+  for (int j = 0; j < i; j++) {
+    n = n->np[!e];
+  }
+  return n->data;
+}
+static Data get(Rep r, End e)         {
+  if (!r->ht[e]) ERROR("empty deque");
+  Node tmp = r->ht[e];
+  Data d = tmp->data;
+  r->ht[e] = tmp->np[!e];
+  if (r->ht[e]) {
+    r->ht[e]->np[e] = NULL;
+  }
+  free(tmp);
+  r->len--;
+  return d;
+}
+static Data rem(Rep r, End e, Data d) {
+  Node n = r->ht[e];
+  while (n) {
+    if (n->data == d) {
+      if (n->np[e]) {
+        n->np[e]->np[!e] = n->np[!e];
+      } else {
+        r->ht[e] = n->np[!e];
+      }
+      
+      free(n);
+      r->len--;
+      return d;
+    }
+    n = n->np[!e];
+  }
+  return 0;
+}
 
 extern Deq deq_new() {
   Rep r=(Rep)malloc(sizeof(*r));

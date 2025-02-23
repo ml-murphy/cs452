@@ -57,9 +57,6 @@ void test_deq_head() {
     assert(strcmp(result, "four") == 0);
     result = deq_head_rem(q, "four");
     assert(strcmp(result, "four") == 0);
-    free(result);
-    
-    deq_del(q, 0);
 }
 
 void test_deq_tail() {
@@ -73,9 +70,6 @@ void test_deq_tail() {
     assert(strcmp(result, "four") == 0);
     result = deq_tail_rem(q, "four");
     assert(strcmp(result, "four") == 0);
-    free(result);
-    
-    deq_del(q, 0);
 }
 
 void test_deq_map() {

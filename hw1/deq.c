@@ -50,6 +50,7 @@ static void put(Rep r, End e, Data d) {
   r->len++;
 }
 static Data ith(Rep r, End e, int i)  {
+  if(i >= r->len) ERROR("index out of bounds");
   Node n = r->ht[e];
   for (int j = 0; j < i; j++) {
     n = n->np[!e];
@@ -72,7 +73,7 @@ static Data rem(Rep r, End e, Data d) {
   Node n = r->ht[e];
   while (n) {
     if (n->data == d) {
-      if (n->np[e]) {
+      if (n->np[e]) { // if starting from tail
         n->np[e]->np[!e] = n->np[!e];
       } else {
         r->ht[e] = n->np[!e];
@@ -82,8 +83,9 @@ static Data rem(Rep r, End e, Data d) {
       r->len--;
       return d;
     }
-    n = n->np[!e];
+    n = n->np[!e]; //move to next node
   }
+  // data was not found, do nothing.
   return 0;
 }
 

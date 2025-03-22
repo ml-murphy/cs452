@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #include "Interpreter.h"
 #include "Sequence.h"
@@ -39,7 +40,10 @@ static void i_sequence(T_sequence t, Sequence sequence) {
 extern void interpretTree(Tree t, int *eof, Jobs jobs) {
   if (!t)
     return;
-  Sequence sequence=newSequence();
-  i_sequence(t,sequence);
-  execSequence(sequence,jobs,eof);
+  Sequence sequence = newSequence();
+  i_sequence(t, sequence);
+  execSequence(sequence, jobs, eof);
+  if (!*eof) {
+    while (waitpid(-1, NULL, WNOHANG) > 0); // Reap background processes
+  }
 }

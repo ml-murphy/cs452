@@ -1,0 +1,13 @@
+This codebase implements a custom shell program, which is a command-line interpreter that processes user input, executes commands, and manages jobs. The shell supports features like command parsing, execution, pipelines, sequences, built-in commands (e.g., pwd, cd, exit, history), and job management. It is structured into multiple components, each handling a specific aspect of the shell's functionality.
+
+The main entry point is Shell.c, which initializes the shell environment, reads user input (using the GNU Readline library), and processes commands in a loop until the user exits. Input lines are parsed into an abstract syntax tree (AST) using the Parser.c module, which follows a grammar defined in grammar.txt. The AST represents the structure of commands, pipelines, and sequences.
+
+The parsing process is facilitated by Scanner.c, which tokenizes the input string into words and symbols. The Parser.c module uses these tokens to construct the AST, represented by data structures defined in Tree.h. These structures include nodes for sequences, pipelines, commands, and words.
+
+Once parsed, the AST is interpreted by Interpreter.c. This module traverses the tree and executes commands. It uses Sequence.c and Pipeline.c to handle sequences of commands and pipelines, respectively. Commands are executed using Command.c, which supports both external commands (via execvp) and built-in commands like pwd, cd, exit, and history. Built-in commands are implemented directly in Command.c.
+
+The job management system is implemented in Jobs.c and deq.c. Jobs represent running processes or groups of processes, and they are stored in a deque (double-ended queue) for tracking. The deq.c module provides a generic deque implementation, which is used throughout the codebase for managing collections of jobs, pipelines, and sequences.
+
+The shell also includes error handling (error.h), memory management utilities, and a test suite (run) to validate its functionality. The test suite runs predefined input commands and compares the output against expected results. Additionally, the vg script uses Valgrind to check for memory leaks.
+
+Overall, the codebase is modular, with clear separation of concerns. It combines parsing, interpretation, and execution to provide a functional shell environment with support for basic shell features and extensibility for additional commands or functionality.

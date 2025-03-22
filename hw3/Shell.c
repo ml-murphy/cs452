@@ -5,11 +5,19 @@
 #include <termios.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <sys/wait.h> // For waitpid()
 
 #include "Jobs.h"
 #include "Parser.h"
 #include "Interpreter.h"
 #include "error.h"
+
+static void wait_for_jobs(Jobs jobs) {
+  while (sizeJobs(jobs) > 0) {
+    wait(NULL);
+    freeJobs(jobs);
+  }
+}
 
 int main() {
   int eof=0;
@@ -36,6 +44,8 @@ int main() {
     interpretTree(tree,&eof,jobs);
     freeTree(tree);
   }
+
+  wait_for_jobs(jobs); // Wait for background jobs before exiting
 
   if (isatty(fileno(stdin))) {
     write_history(".history");

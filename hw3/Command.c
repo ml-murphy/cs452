@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <fcntl.h> // For open()
 
 #include "Command.h"
 #include "error.h"
-#include <readline/history.h>
 
 typedef struct {
   char *file;
@@ -33,14 +31,6 @@ BIDEFN(exit) {
   *eof=1;
 }
 
-BIDEFN(history) {
-  builtin_args(r,0);
-  HIST_ENTRY** h_list = history_list();
-  for (int i = 0; h_list[i]; i++) {
-    printf("%d: %s\n", i, h_list[i]->line);
-  }
-  *eof=1;
-}
 BIDEFN(pwd) {
   builtin_args(r,0);
   if (!cwd)
@@ -49,19 +39,18 @@ BIDEFN(pwd) {
 }
 
 BIDEFN(cd) {
-  builtin_args(r, 1);
-  if (strcmp(r->argv[1], "-") == 0) {
-    if (!owd) ERROR("No previous directory");
-    char *tmp = cwd;
-    cwd = owd;
-    owd = tmp;
+  builtin_args(r,1);
+  if (strcmp(r->argv[1],"-")==0) {
+    char *twd=cwd;
+    cwd=owd;
+    owd=twd;
   } else {
     if (owd) free(owd);
-    owd = cwd;
-    cwd = strdup(r->argv[1]);
+    owd=cwd;
+    cwd=strdup(r->argv[1]);
   }
   if (cwd && chdir(cwd))
-    ERROR("chdir() failed");
+    ERROR("chdir() failed"); // warn
 }
 
 static int builtin(BIARGS) {
@@ -69,13 +58,10 @@ static int builtin(BIARGS) {
     char *s;
     void (*f)(BIARGS);
   } Builtin;
-  
-  // Add new builtins here
   static const Builtin builtins[]={
     BIENTRY(exit),
     BIENTRY(pwd),
     BIENTRY(cd),
-    BIENTRY(history),
     {0,0}
   };
   int i;
@@ -116,28 +102,7 @@ extern Command newCommand(T_words words) {
   return r;
 }
 
-static void setup_redirection(CommandRep r) {
-  for (int i = 0; r->argv[i]; i++) {
-    if (strcmp(r->argv[i], "<") == 0) {
-      int fd = open(r->argv[i + 1], O_RDONLY);
-      if (fd == -1) ERROR("Failed to open input file");
-      dup2(fd, STDIN_FILENO);
-      close(fd);
-      r->argv[i] = NULL; // Terminate arguments
-      break;
-    } else if (strcmp(r->argv[i], ">") == 0) {
-      int fd = open(r->argv[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (fd == -1) ERROR("Failed to open output file");
-      dup2(fd, STDOUT_FILENO);
-      close(fd);
-      r->argv[i] = NULL; // Terminate arguments
-      break;
-    }
-  }
-}
-
 static void child(CommandRep r, int fg) {
-  setup_redirection(r); // Add redirection setup
   int eof=0;
   Jobs jobs=newJobs();
   if (builtin(r,&eof,jobs))

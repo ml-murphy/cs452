@@ -6,6 +6,8 @@
 #include "Command.h"
 #include "error.h"
 #include <readline/history.h>
+#include <signal.h>
+#include <sys/types.h>
 
 typedef struct {
   char *file;
@@ -29,13 +31,17 @@ static void builtin_args(CommandRep r, int n) {
 
 BIDEFN(exit) {
   builtin_args(r,0);
-  *eof=1;
+  *eof = 1;
+  fflush(stdout); // Ensure all output is flushed
+  kill(getppid(), SIGUSR1); // Notify the parent process using a signal
 }
 
 BIDEFN(pwd) {
   builtin_args(r,0);
-  if (!cwd)
+  if (!cwd) {
     cwd=getcwd(0,0);
+    printf("cwd: %s\n",cwd);
+  }
   printf("%s\n",cwd);
 }
 
@@ -50,8 +56,11 @@ BIDEFN(cd) { //TODO: doesnt work
     owd=cwd;
     cwd=strdup(r->argv[1]);
   }
-  if (cwd && chdir(cwd))
+  if (cwd && chdir(cwd)){
     ERROR("chdir() failed"); // warn
+  } else {
+    printf("going to %s\n",cwd);
+  }
 }
 
 BIDEFN(history) {

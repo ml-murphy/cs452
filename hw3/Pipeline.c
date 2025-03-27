@@ -3,10 +3,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <string.h>
 
 #include "Pipeline.h"
 #include "deq.h"
 #include "error.h"
+#include "Command.h"
 
 typedef struct {
   Deq processes;
@@ -37,6 +39,13 @@ static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
   int pipefd[2], in_fd = STDIN_FILENO;
 
   for (int i = 0; i < sizePipeline(r) && !*eof; i++) {
+    Command command = deq_head_ith(r->processes, i);
+
+    // Check if the command is a builtin and execute it in the parent process
+    if (i == sizePipeline(r) - 1 && builtin(command, eof, jobs)) {
+      continue; // Skip forking if it's a builtin
+    }
+
     if (i < sizePipeline(r) - 1) {
       if (pipe(pipefd) == -1) ERROR("pipe() failed");
     }
@@ -53,7 +62,7 @@ static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
         close(pipefd[0]);
         close(pipefd[1]);
       }
-      execCommand(deq_head_ith(r->processes, i), pipeline, jobs, jobbed, eof, 1);
+      execCommand(command, pipeline, jobs, jobbed, eof, 1);
       exit(0);
     }
 

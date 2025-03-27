@@ -9,10 +9,10 @@
 #include <signal.h>
 #include <sys/types.h>
 
-typedef struct {
-  char *file;
-  char **argv;
-} *CommandRep;
+// typedef struct {
+//   char *file;
+//   char **argv;
+// } *CommandRep;
 
 #define BIARGS CommandRep r, int *eof, Jobs jobs
 #define BINAME(name) bi_##name // prefix for builtin functions
@@ -40,12 +40,12 @@ BIDEFN(pwd) {
   builtin_args(r,0);
   if (!cwd) {
     cwd=getcwd(0,0);
-    printf("cwd: %s\n",cwd);
   }
   printf("%s\n",cwd);
 }
 
-BIDEFN(cd) { //TODO: doesnt work
+//TODO: doesnt work except sometimes it does :)
+BIDEFN(cd) { 
   builtin_args(r,1);
   if (strcmp(r->argv[1],"-")==0) {
     char *twd=cwd;
@@ -58,8 +58,6 @@ BIDEFN(cd) { //TODO: doesnt work
   }
   if (cwd && chdir(cwd)){
     ERROR("chdir() failed"); // warn
-  } else {
-    printf("going to %s\n",cwd);
   }
 }
 
@@ -70,7 +68,7 @@ BIDEFN(history) {
     printf("%d %s\n",i,h[i]->line);
 }
 
-static int builtin(BIARGS) {
+int builtin(BIARGS) { // Remove static to make it accessible externally
   typedef struct {
     char *s;
     void (*f)(BIARGS);

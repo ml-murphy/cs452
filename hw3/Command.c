@@ -5,6 +5,7 @@
 
 #include "Command.h"
 #include "error.h"
+#include <readline/history.h>
 
 typedef struct {
   char *file;
@@ -12,7 +13,7 @@ typedef struct {
 } *CommandRep;
 
 #define BIARGS CommandRep r, int *eof, Jobs jobs
-#define BINAME(name) bi_##name
+#define BINAME(name) bi_##name // prefix for builtin functions
 #define BIDEFN(name) static void BINAME(name) (BIARGS)
 #define BIENTRY(name) {#name,BINAME(name)}
 
@@ -38,7 +39,7 @@ BIDEFN(pwd) {
   printf("%s\n",cwd);
 }
 
-BIDEFN(cd) {
+BIDEFN(cd) { //TODO: doesnt work
   builtin_args(r,1);
   if (strcmp(r->argv[1],"-")==0) {
     char *twd=cwd;
@@ -53,6 +54,13 @@ BIDEFN(cd) {
     ERROR("chdir() failed"); // warn
 }
 
+BIDEFN(history) {
+  builtin_args(r,0);
+  HIST_ENTRY **h=history_list();
+  for (int i=0; h[i]; i++)
+    printf("%d %s\n",i,h[i]->line);
+}
+
 static int builtin(BIARGS) {
   typedef struct {
     char *s;
@@ -62,6 +70,7 @@ static int builtin(BIARGS) {
     BIENTRY(exit),
     BIENTRY(pwd),
     BIENTRY(cd),
+    BIENTRY(history),
     {0,0}
   };
   int i;
